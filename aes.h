@@ -6,14 +6,15 @@
 typedef unsigned char BYTE;
 class AES{
     public:
-        AES(int keySize,std::string &aesKey,std::string &plainText,bool mode);
+        AES(int keySize,std::string &aesKey,std::string &plainText,std::string& encrypteFile,std::string& decrypteFile,bool mode);
         ~AES();
         void En_De();
         void Encrypt();
         void Decrypt();
         void PrintState();
     private:
-
+        std::string encryptedFile;
+        std::string decryptedFile;
                 
         const int NUM_OF_BLOCK =  4;
         int NUM_OF_ROUND;
@@ -79,6 +80,8 @@ class AES{
             0xA0,0xE0,0x3B,0x4D,0xAE,0x2A,0xF5,0xB0,0xC8,0xEB,0xBB,0x3C,0x83,0x53,0x99,0x61,
             0x17,0x2B,0x04,0x7E,0xBA,0x77,0xD6,0x26,0xE1,0x69,0x14,0x63,0x55,0x21,0x0C,0x7D
         };
+
+        void WirteToFile(std::string& fileName);
         
         void TextToStateMat(std::string &plainText);
         void PrintRoundKey(int i);

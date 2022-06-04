@@ -1,15 +1,17 @@
 #include "aes.h"
 #include <string>
 #include <vector>
-#include<stdio.h>
-#include<time.h>
+#include <stdio.h>
+#include <time.h>
+#include <fstream>
 
-
-AES::AES(int keySize,std::string &aesKey,std::string &plainText,bool mode = false){
+AES::AES(int keySize,std::string &aesKey,std::string &plainText,std::string& encrypteFile,std::string& decrypteFile,bool mode = false){
     NUM_OF_KEY_BLOCK_32 = keySize/32;
     NUM_OF_ROUND = NUM_OF_KEY_BLOCK_32 + 6;
     RoundKey.resize(NUM_OF_BLOCK * (NUM_OF_ROUND + 1) * 4); //BYTE
     this->detailMode = mode;
+    this->encryptedFile = encrypteFile;
+    this->decryptedFile = decrypteFile;
     this->keys = std::vector<BYTE>(aesKey.begin(),aesKey.end());
     TextToStateMat(plainText);
     this->KeyExpansion();
@@ -33,6 +35,19 @@ void AES::PrintState(){
             std::cout << state[j][i];
         }
     }
+}
+
+void AES::WirteToFile(std::string& fileName){
+    std::ofstream out(fileName.c_str());
+    std::string res;
+    for(int i = 0;i<4;i++){
+        for(int j = 0;j<4;j++){
+            if(this->state[j][i] != 0x00) res += this->state[j][i];
+        }
+    }
+
+    out << res << std::endl;
+    out.close();
 }
 
 // void AES::PrintRoundKey(int i){
@@ -85,6 +100,8 @@ void AES::Encrypt(){
     //total time / (eachRound+1 * 4 + Key_Block_size)[Word] * 4 -> Bytes
     // std::cout << "Used time:" << (double)(end - start)/CLOCKS_PER_SEC << std::endl;
     std::cout << "AES Encryption performance: " << (((double)(end - start)/CLOCKS_PER_SEC) / (double)(((this->NUM_OF_ROUND+1)*this->NUM_OF_BLOCK + NUM_OF_KEY_BLOCK_32) * 4)) << " bytes/sec\n";;
+    WirteToFile(this->encryptedFile);
+    
     printf("\n");
 }
 
@@ -123,6 +140,7 @@ void AES::Decrypt(){
     std::cout << "---------AES Decrypted--------------\n";
     // std::cout << "Used time:" << (double)(end - start)/CLOCKS_PER_SEC << std::endl;
     std::cout << "AES Decryption performance: " << ((double)(end - start)/CLOCKS_PER_SEC) / ((this->NUM_OF_ROUND+1)*this->NUM_OF_BLOCK + NUM_OF_KEY_BLOCK_32) * 4 << " bytes/sec\n";
+    WirteToFile(this->decryptedFile);
     printf("\n");
 }
 

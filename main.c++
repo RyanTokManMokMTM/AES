@@ -4,8 +4,8 @@
 #include "time.h"
 #include "aes.cpp"
 
-AES* NewAes(int keySize,std::string &aesKey,std::string &plainText,bool mode){
-    return new AES(keySize,aesKey,plainText,mode);
+AES* NewAes(int keySize,std::string &aesKey,std::string &plainText,std::string& encrypteFile,std::string& decrypteFile,bool mode){
+    return new AES(keySize,aesKey,plainText,encrypteFile,decrypteFile,mode);
 }
 
 std::string ReadFile(std::string fileName){
@@ -21,17 +21,19 @@ std::string ReadFile(std::string fileName){
 }
 
 void Start(){
+
+
     std::cout<<"     _      _____   ____      ____    _                    ____                                      _" << std::endl; 
     std::cout<<"    / \\    | ____| / ___|    |  _ \\  | |   __ _   _   _   / ___|  _ __    ___    _   _   _ __     __| |" << std::endl; 
     std::cout<<"   / _ \\   |  _|   \\___ \\    | |_) | | |  / _` | | | | | | |  _  | '__|  / _ \\  | | | | | '_ \\   / _` |" << std::endl; 
     std::cout<<"  / ___ \\  | |___   ___) |   |  __/  | | | (_| | | |_| | | |_| | | |    | (_) | | |_| | | | | | | (_| |" << std::endl; 
     std::cout<<" /_/   \\_\\ |_____| |____/    |_|     |_|  \\__,_|  \\__, |  \\____| |_|     \\___/   \\__,_| |_| |_|  \\__,_|" << std::endl; 
     std::cout<<"                                                  |___/                                                " << std::endl; 
-    std::cout<<"                                Welcome to AES Algorithm Playground                                    " << std::endl;
+    std::cout<<"                                Welcome to AES Algorithm Playground(128/192/256)                                    " << std::endl;
 }
 
 int main(int argc,char **argv){
-    std::string keyFilePath,textFilePath;
+    std::string keyFilePath,textFilePath,EncryptedFilePath,DecryptedFilePath;
     std::string outputName;
     bool isMode = false;
     Start();    
@@ -40,16 +42,17 @@ int main(int argc,char **argv){
     std::cout << "Enter key file path: ";
     std::cin >> keyFilePath;
 
-    std::cout << "Enter Text file path: ";
+    std::cout << "Enter text file path: ";
     std::cin >> textFilePath;
+
+    std::cout << "Enter encrypted file path: ";
+    std::cin >> EncryptedFilePath;
+ 
+    std::cout << "Enter decrypted file path: ";
+    std::cin >> DecryptedFilePath;
 
     std::cout << "AES Detail Mode? (Yes:1/No:0): ";
     std::cin >> isMode;
-
-    // if(isMode){
-    //     std::cout << "Enter AES Detail output file name:";
-    //     std::cin >> outputName;
-    // }
 
     std::string keyStr = ReadFile(keyFilePath);
     std::string textStr = ReadFile(textFilePath);
@@ -71,7 +74,7 @@ int main(int argc,char **argv){
             textStr.push_back(0x00);
         }
     }
-    auto aesObj = NewAes(keySize,keyStr,textStr,isMode);
+    auto aesObj = NewAes(keySize,keyStr,textStr,EncryptedFilePath,DecryptedFilePath,isMode);
     int selected = -1;
     do{
         std::cout << "AES Main menu\n";
