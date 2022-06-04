@@ -6,7 +6,7 @@
 typedef unsigned char BYTE;
 class AES{
     public:
-        AES(int keySize,std::string &aesKey,std::string &plainText);
+        AES(int keySize,std::string &aesKey,std::string &plainText,bool mode);
         ~AES();
         void En_De();
         void Encrypt();
@@ -18,7 +18,7 @@ class AES{
         const int NUM_OF_BLOCK =  4;
         int NUM_OF_ROUND;
         int NUM_OF_KEY_BLOCK_32;
-
+        bool detailMode;
         std::vector<BYTE> RoundKey;
         std::vector<BYTE> keys;
         std::vector<std::vector<BYTE>> state = std::vector<std::vector<BYTE>>(4,std::vector<BYTE>(4,0x00));

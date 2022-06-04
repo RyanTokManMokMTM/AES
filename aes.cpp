@@ -5,11 +5,11 @@
 #include<time.h>
 
 
-AES::AES(int keySize,std::string &aesKey,std::string &plainText){
+AES::AES(int keySize,std::string &aesKey,std::string &plainText,bool mode = false){
     NUM_OF_KEY_BLOCK_32 = keySize/32;
     NUM_OF_ROUND = NUM_OF_KEY_BLOCK_32 + 6;
     RoundKey.resize(NUM_OF_BLOCK * (NUM_OF_ROUND + 1) * 4); //BYTE
-
+    this->detailMode = mode;
     this->keys = std::vector<BYTE>(aesKey.begin(),aesKey.end());
     TextToStateMat(plainText);
     this->KeyExpansion();
@@ -35,14 +35,14 @@ void AES::PrintState(){
     }
 }
 
-void AES::PrintRoundKey(int i){
-    printf("W[%d]:",i);
-    printf("%02hhx ",RoundKey[i*4]);
-    printf("%02hhx ",RoundKey[i*4 + 1]);
-    printf("%02hhx ",RoundKey[i*4 + 2]);
-    printf("%02hhx ",RoundKey[i*4 + 3]);
-    printf("\n");
-}
+// void AES::PrintRoundKey(int i){
+//     printf("W[%d]:",i);
+//     printf("%02hhx ",RoundKey[i*4]);
+//     printf("%02hhx ",RoundKey[i*4 + 1]);
+//     printf("%02hhx ",RoundKey[i*4 + 2]);
+//     printf("%02hhx ",RoundKey[i*4 + 3]);
+//     printf("\n");
+// }
 
 void AES::En_De(){
     std::cout << "---------Encryption And Decryption-------------\n";
@@ -57,6 +57,12 @@ void AES::Encrypt(){
     start = clock();
     AddRoundKey(0); 
 
+    if(this->detailMode){
+        std::cout << "Encryption - Round 0\n";
+        this->LogState();
+    }
+
+
     //from round 1 to round n
     for(int i = 1;i<=NUM_OF_ROUND;i++){
         //subByte
@@ -68,12 +74,18 @@ void AES::Encrypt(){
             MixColumns();
         //AddRoundKey
         AddRoundKey(i);
+
+        if(this->detailMode){
+            std::cout << "Encryption - Round "<< i << std::endl;
+            this->LogState();
+        }
     }
     end = clock();
     std::cout << "---------AES Encrypted--------------\n";
     //total time / (eachRound+1 * 4 + Key_Block_size)[Word] * 4 -> Bytes
-    std::cout << "Used time:" << (double)(end - start)/CLOCKS_PER_SEC << std::endl;
+    // std::cout << "Used time:" << (double)(end - start)/CLOCKS_PER_SEC << std::endl;
     std::cout << "AES Encryption performance: " << (((double)(end - start)/CLOCKS_PER_SEC) / (double)(((this->NUM_OF_ROUND+1)*this->NUM_OF_BLOCK + NUM_OF_KEY_BLOCK_32) * 4)) << " bytes/sec\n";;
+    printf("\n");
 }
 
 void AES::Decrypt(){
@@ -83,6 +95,10 @@ void AES::Decrypt(){
     //InvAddroundKey - round 0
     InvAddRoundKey(0); 
 
+    if(this->detailMode){
+        std::cout << "Decryption - Round 0\n";
+        this->LogState();
+    }
     //From round 1 to round n
     for(int i = 1;i<=NUM_OF_ROUND;i++){
         //ShiftRows
@@ -96,12 +112,18 @@ void AES::Decrypt(){
 
         //InvMixColumns
         if(i < NUM_OF_ROUND) //last round without mix columns
-            InvMixColumns();    
+            InvMixColumns();  
+
+        if(this->detailMode){
+            std::cout << "Decryption - Round "<< i << std::endl;
+            this->LogState();
+        }  
     }
     end = clock();
     std::cout << "---------AES Decrypted--------------\n";
-    std::cout << "Used time:" << (double)(end - start)/CLOCKS_PER_SEC << std::endl;
+    // std::cout << "Used time:" << (double)(end - start)/CLOCKS_PER_SEC << std::endl;
     std::cout << "AES Decryption performance: " << ((double)(end - start)/CLOCKS_PER_SEC) / ((this->NUM_OF_ROUND+1)*this->NUM_OF_BLOCK + NUM_OF_KEY_BLOCK_32) * 4 << " bytes/sec\n";
+    printf("\n");
 }
 
 void AES::TextToStateMat(std::string &plainText){
@@ -233,7 +255,7 @@ void AES::KeyExpansion(){
             //W4 = W3(temp) XOR W1(i-block_size)*4+k(index of w1-BYTE)
             RoundKey[i * NUM_OF_BLOCK + k] = temp[k] ^ RoundKey[(i-NUM_OF_KEY_BLOCK_32) * 4 + k];
         }
-        PrintRoundKey(i);
+        // PrintRoundKey(i);
     }
 }
 
