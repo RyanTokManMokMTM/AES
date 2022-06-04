@@ -1,6 +1,9 @@
 #include "aes.h"
 #include <string>
 #include <vector>
+#include<stdio.h>
+#include<time.h>
+
 
 AES::AES(int keySize,std::string &aesKey,std::string &plainText){
     NUM_OF_KEY_BLOCK_32 = keySize/32;
@@ -9,7 +12,6 @@ AES::AES(int keySize,std::string &aesKey,std::string &plainText){
 
     this->keys = std::vector<BYTE>(aesKey.begin(),aesKey.end());
     TextToStateMat(plainText);
-
     this->KeyExpansion();
 
 }
@@ -49,8 +51,10 @@ void AES::En_De(){
 }
 
 void AES::Encrypt(){
+    clock_t start,end;
     std::cout << "---------AES Encryption-------------\n";
     //Addround key - round 0
+    start = clock();
     AddRoundKey(0); 
 
     //from round 1 to round n
@@ -65,11 +69,17 @@ void AES::Encrypt(){
         //AddRoundKey
         AddRoundKey(i);
     }
+    end = clock();
     std::cout << "---------AES Encrypted--------------\n";
+    //total time / (eachRound+1 * 4 + Key_Block_size)[Word] * 4 -> Bytes
+    std::cout << "Used time:" << (double)(end - start)/CLOCKS_PER_SEC << std::endl;
+    std::cout << "AES Encryption performance: " << (((double)(end - start)/CLOCKS_PER_SEC) / (double)(((this->NUM_OF_ROUND+1)*this->NUM_OF_BLOCK + NUM_OF_KEY_BLOCK_32) * 4)) << " bytes/sec\n";;
 }
 
 void AES::Decrypt(){
+    clock_t start,end;
     std::cout << "---------AES Decryption-------------\n";
+    start = clock();
     //InvAddroundKey - round 0
     InvAddRoundKey(0); 
 
@@ -88,7 +98,10 @@ void AES::Decrypt(){
         if(i < NUM_OF_ROUND) //last round without mix columns
             InvMixColumns();    
     }
+    end = clock();
     std::cout << "---------AES Decrypted--------------\n";
+    std::cout << "Used time:" << (double)(end - start)/CLOCKS_PER_SEC << std::endl;
+    std::cout << "AES Decryption performance: " << ((double)(end - start)/CLOCKS_PER_SEC) / ((this->NUM_OF_ROUND+1)*this->NUM_OF_BLOCK + NUM_OF_KEY_BLOCK_32) * 4 << " bytes/sec\n";
 }
 
 void AES::TextToStateMat(std::string &plainText){
@@ -148,7 +161,7 @@ void AES::KeyExpansion(){
         RoundKey[i+1*4] = keys[i+1*4];
         RoundKey[i+2*4] = keys[i+2*4];
         RoundKey[i+3*4] = keys[i+3*4];
-        PrintRoundKey(i);
+        // PrintRoundKey(i);
     }
 
     //128 bits w4 ~ w44 need 9 more round
@@ -269,7 +282,6 @@ void AES::AddRoundKey(int r){
         }
     }
 }
-
 
 void AES::SubStitute(){
     for(int i = 0;i<4;i++){
