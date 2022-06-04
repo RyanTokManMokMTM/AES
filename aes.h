@@ -6,12 +6,24 @@
 typedef unsigned char BYTE;
 class AES{
     public:
-        AES();
+        AES(int keySize,std::string &aesKey,std::string &plainText);
         ~AES();
-        void AESProcess();
-        void Encrypted();
-        void Decrypted();
+        void En_De();
+        void Encrypt();
+        void Decrypt();
+        void PrintState();
     private:
+
+                
+        const int NUM_OF_BLOCK =  4;
+        int NUM_OF_ROUND;
+        int NUM_OF_KEY_BLOCK_32;
+
+        std::vector<BYTE> RoundKey;
+        std::vector<BYTE> keys;
+        std::vector<std::vector<BYTE>> state = std::vector<std::vector<BYTE>>(4,std::vector<BYTE>(4,0x00));
+
+
         //Rcons[0] ignored - set as random value
         std::vector<BYTE> Rcons = {
             0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 
@@ -68,15 +80,9 @@ class AES{
             0x17,0x2B,0x04,0x7E,0xBA,0x77,0xD6,0x26,0xE1,0x69,0x14,0x63,0x55,0x21,0x0C,0x7D
         };
         
-        void TextToStateMat();
-
-        const int NUM_OF_BLOCK =  4;
-        int NUM_OF_ROUND;
-        int NUM_OF_KEY_BLOCK_32;
-
-        std::vector<BYTE> RoundKey;
-        std::vector<BYTE> keys;
-
+        void TextToStateMat(std::string &plainText);
+        void PrintRoundKey(int i);
+        void LogState();
         BYTE GF_Mul(BYTE mulVal,BYTE state);
 
         void KeyExpansion();

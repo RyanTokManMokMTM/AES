@@ -1,6 +1,7 @@
 #include "aes.h"
 #include <string>
 #include <vector>
+
 AES::AES(int keySize,std::string &aesKey,std::string &plainText){
     NUM_OF_KEY_BLOCK_32 = keySize/32;
     NUM_OF_ROUND = NUM_OF_KEY_BLOCK_32 + 6;
@@ -8,6 +9,86 @@ AES::AES(int keySize,std::string &aesKey,std::string &plainText){
 
     this->keys = std::vector<BYTE>(aesKey.begin(),aesKey.end());
     TextToStateMat(plainText);
+
+    this->KeyExpansion();
+
+}
+
+AES::~AES(){}
+
+void AES::LogState(){
+    for(int i = 0;i<4;i++){
+        for(int j = 0;j<4;j++){
+            printf("%02hhx ",state[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void AES::PrintState(){
+    for(int i = 0;i<4;i++){
+        for(int j = 0;j<4;j++){
+            std::cout << state[j][i];
+        }
+    }
+}
+
+void AES::PrintRoundKey(int i){
+    printf("W[%d]:",i);
+    printf("%02hhx ",RoundKey[i*4]);
+    printf("%02hhx ",RoundKey[i*4 + 1]);
+    printf("%02hhx ",RoundKey[i*4 + 2]);
+    printf("%02hhx ",RoundKey[i*4 + 3]);
+    printf("\n");
+}
+
+void AES::En_De(){
+    std::cout << "---------Encryption And Decryption-------------\n";
+    this->Encrypt();
+    this->Decrypt();
+}
+
+void AES::Encrypt(){
+    std::cout << "---------AES Encryption-------------\n";
+    //Addround key - round 0
+    AddRoundKey(0); 
+
+    //from round 1 to round n
+    for(int i = 1;i<=NUM_OF_ROUND;i++){
+        //subByte
+        SubStitute();
+        //ShiftRow
+        ShiftRow();
+        //MixMat
+        if(i < NUM_OF_ROUND) //last round without mix columns
+            MixColumns();
+        //AddRoundKey
+        AddRoundKey(i);
+    }
+    std::cout << "---------AES Encrypted--------------\n";
+}
+
+void AES::Decrypt(){
+    std::cout << "---------AES Decryption-------------\n";
+    //InvAddroundKey - round 0
+    InvAddRoundKey(0); 
+
+    //From round 1 to round n
+    for(int i = 1;i<=NUM_OF_ROUND;i++){
+        //ShiftRows
+        InvShiftRows();
+
+        //InvSubStitute
+        InvSubStitute();
+
+        //InvAddRoundKey
+        InvAddRoundKey(i);
+
+        //InvMixColumns
+        if(i < NUM_OF_ROUND) //last round without mix columns
+            InvMixColumns();    
+    }
+    std::cout << "---------AES Decrypted--------------\n";
 }
 
 void AES::TextToStateMat(std::string &plainText){
@@ -20,7 +101,7 @@ void AES::TextToStateMat(std::string &plainText){
 }
 
 void AES::KeyExpansion(){
-    //Input[w1,w2,w3,w4] -> w44 for 128bit key
+     //Input[w1,w2,w3,w4] -> w44 for 128bit key
     //0's round -> [wi,wi+1,..wi+3]
     //1's round -> [w4,...w7]
 
@@ -59,19 +140,24 @@ void AES::KeyExpansion(){
     //w3 = string[12:15]
 
     //Each iteration = word -> assign to RoundKey
-    for(int i = 0;i<4;i++){
+    //128 - bit 4 words w0 - w3
+    //192 - bit 6 words w0 - w5
+    //256 - bit 8 words - w0 - w7
+    for(int i = 0;i<NUM_OF_KEY_BLOCK_32;i++){
         RoundKey[i*4] = keys[i*4];
         RoundKey[i+1*4] = keys[i+1*4];
         RoundKey[i+2*4] = keys[i+2*4];
         RoundKey[i+3*4] = keys[i+3*4];
-        PrintEachWord(i);
+        PrintRoundKey(i);
     }
 
     //128 bits w4 ~ w44 need 9 more round
     //from 4 to 44 if it's 128 bits
     //if block size = 4, total round is blockSize + 6
     //total words size for expanded keys is roundSize * blockSize = 44
-    std::vector<BYTE> tempBlock(4);
+    std::vector<char> tempBlock(4);
+
+    //each time process 4 Words
     for(int i = NUM_OF_KEY_BLOCK_32;i< NUM_OF_BLOCK*(NUM_OF_ROUND + 1) ;i++){
         // printf("Expanding W[%d]\n",i);
         //From starting poin : we have blockSize'th word
@@ -115,6 +201,15 @@ void AES::KeyExpansion(){
             temp[0] = temp[0] ^ Rcons[i];
         }
 
+        if(NUM_OF_BLOCK == 8 && i % NUM_OF_BLOCK == 4){
+            //256 bit only - Sutitude
+            temp[0] = S_BOX[temp[0]];
+            temp[1] = S_BOX[temp[1]];
+            temp[2] = S_BOX[temp[2]];
+            temp[3] = S_BOX[temp[3]];
+
+        }
+
         //Put then back to the RoundKey
         //W4 = G(W(i/4)) XOR W(i - size)
 
@@ -125,7 +220,9 @@ void AES::KeyExpansion(){
             //W4 = W3(temp) XOR W1(i-block_size)*4+k(index of w1-BYTE)
             RoundKey[i * NUM_OF_BLOCK + k] = temp[k] ^ RoundKey[(i-NUM_OF_KEY_BLOCK_32) * 4 + k];
         }
-    }}
+        PrintRoundKey(i);
+    }
+}
 
 void AES::AddRoundKey(int r){
     //Adding RoundKey to state
@@ -172,6 +269,7 @@ void AES::AddRoundKey(int r){
         }
     }
 }
+
 
 void AES::SubStitute(){
     for(int i = 0;i<4;i++){
@@ -240,7 +338,7 @@ void AES::InvMixColumns(){
     }
     state = tempState;}
 
-void AES::InvAddRoundKey(){
+void AES::InvAddRoundKey(int r){
     for(int i = 0;i<4;i++){
         for(int j = 0;j<4;j++){
             state[j][i] ^= RoundKey[(i*NUM_OF_BLOCK+j) + ((NUM_OF_ROUND - r) * NUM_OF_BLOCK * 4)];
@@ -261,14 +359,14 @@ void AES::InvAddRoundKey(){
 */
 BYTE AES::GF_Mul(BYTE mulVal,BYTE stateByte){
     BYTE state_pow[4] = {stateByte,0x00,0x00,0x00};
-    for(int i = 0;i<4;i++){
+    for(int i = 1;i<4;i++){
         state_pow[i] = state_pow[i-1] << 1;
         if(state_pow[i-1] & 0x80) state_pow[i] ^= 0x1B;
     }
 
-    BYTE res;
+    BYTE res = 0x00;
     for(int i = 0;i<4;i++){
-        if(mulVal >> i & 0x01){
+        if((mulVal >> i) & 0x01){
             res ^= state_pow[i];
         }
     }

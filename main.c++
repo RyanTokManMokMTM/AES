@@ -1,9 +1,9 @@
 #include<iostream>
 #include <vector>
-// #include "aes.cpp"
+#include "aes.cpp"
 
 // typedef unsigned char BYTE;
-// const int NUM_OF_BLOCK =  4;
+// const int NUM_OF_BLOCK = 4;
 // int NUM_OF_ROUND;
 // int NUM_OF_KEY_BLOCK_32;
 // //Total 10- Rcons[0] ignored
@@ -129,7 +129,10 @@
 //     //w3 = string[12:15]
 
 //     //Each iteration = word -> assign to RoundKey
-//     for(int i = 0;i<4;i++){
+//     //128 - bit 4 words w0 - w3
+//     //192 - bit 6 words w0 - w5
+//     //256 - bit 8 words - w0 - w7
+//     for(int i = 0;i<NUM_OF_KEY_BLOCK_32;i++){
 //         RoundKey[i*4] = keys[i*4];
 //         RoundKey[i+1*4] = keys[i+1*4];
 //         RoundKey[i+2*4] = keys[i+2*4];
@@ -142,6 +145,8 @@
 //     //if block size = 4, total round is blockSize + 6
 //     //total words size for expanded keys is roundSize * blockSize = 44
 //     std::vector<char> tempBlock(4);
+
+//     //each time process 4 Words
 //     for(int i = NUM_OF_KEY_BLOCK_32;i< NUM_OF_BLOCK*(NUM_OF_ROUND + 1) ;i++){
 //         // printf("Expanding W[%d]\n",i);
 //         //From starting poin : we have blockSize'th word
@@ -183,6 +188,15 @@
 //             //RoundConst : all rightmost bit are 0 ,expect the first one
 //             //so here , we just need to XOR the first one
 //             temp[0] = temp[0] ^ Rcons[i];
+//         }
+
+//         if(NUM_OF_BLOCK == 8 && i % NUM_OF_BLOCK == 4){
+//             //256 bit only - Sutitude
+//             temp[0] = S_BOX[temp[0]];
+//             temp[1] = S_BOX[temp[1]];
+//             temp[2] = S_BOX[temp[2]];
+//             temp[3] = S_BOX[temp[3]];
+
 //         }
 
 //         //Put then back to the RoundKey
@@ -328,8 +342,6 @@
 // }
 
 // void Encrypted(){
-//     printf("Orginal State:\n");
-//     PrintState();
 //     //Starting at round 1-10,expect round 0
 //     //Round 0 just need a AddRoung Key
 //     printf("Round 0 - (Adding Round key):\n");
@@ -461,8 +473,12 @@
 //     PrintState();
 // }
 
-int main(){
+AES* NewAes(int keySize,std::string &aesKey,std::string &plainText){
+    return new AES(keySize,aesKey,plainText);
+}
 
+int main(){
+    bool aesProcess =false ,encrypt = false,decrypt = false;
     int keySize=0;
     std::string intput_key;
     while(keySize != 128 && keySize != 192 && keySize != 256){
@@ -482,11 +498,13 @@ int main(){
         std::cout << "Pleas input 256 bits keys(32 characters)\n";
         std::cin >> intput_key;
         // keys.resize(32);
-        exit(0);
+        // exit(0);
     }else{
         return 0;
     }
 
+
+    //From file
     std::string plainText;
     std::cout << "input your plain(max 16characters)";
     std::cin >> plainText;
@@ -497,8 +515,10 @@ int main(){
         }
     }
 
-
-
+    // //Get Plain Text and
+    auto obj = NewAes(keySize,intput_key,plainText);
+    obj->En_De();
+    obj->PrintState();
     return 0;
 }
 
