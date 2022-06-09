@@ -16,7 +16,6 @@ std::vector<BYTE> RoundKey;
 std::vector<BYTE> keys;
 std::vector<std::vector<BYTE>> state = std::vector<std::vector<BYTE>>(4,std::vector<BYTE>(4,0x00));
 
-
 //Rcons[0] ignored - set as random value
 std::vector<BYTE> Rcons = {
     0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 
@@ -73,6 +72,16 @@ std::vector<BYTE> Inv_S_BOX{
     0x17,0x2B,0x04,0x7E,0xBA,0x77,0xD6,0x26,0xE1,0x69,0x14,0x63,0x55,0x21,0x0C,0x7D
 };
 
+/*
+    Suppose
+    6E * 3
+    state_pow [6E,6E*2,6E*4,6E*8]
+    state_pow [6E,DC,A3,5D]
+
+    mulVal: 0x03 : 11
+    res:6E XOR value
+    res: res' XOR DC = 1011 0010
+*/
 BYTE GF_Mul(BYTE mulVal,BYTE stateByte){
     BYTE state_pow[4] = {stateByte,0x00,0x00,0x00};
     for(int i = 1;i<4;i++){
@@ -134,11 +143,6 @@ void PrintRoundKey(int i){
     printf("\n");
 }
 
-// void AES::En_De(){
-//     this->Encrypt();
-//     this->Decrypt();
-// }
-
 void TextToStateMat(std::string plainText){
     for(int i = 0;i<4;i++){
         for(int j = 0;j<4;j++){
@@ -196,7 +200,7 @@ void KeyExpansion(){
         RoundKey[i+1*4] = keys[i+1*4];
         RoundKey[i+2*4] = keys[i+2*4];
         RoundKey[i+3*4] = keys[i+3*4];
-        PrintRoundKey(i);
+        // PrintRoundKey(i);
     }
 
     //128 bits w4 ~ w44 need 9 more round
@@ -270,7 +274,7 @@ void KeyExpansion(){
             //W4 = W3(temp) XOR W1(i-block_size)*4+k(index of w1-BYTE)
             RoundKey[i * NUM_OF_BLOCK + k] = temp[k] ^ RoundKey[(i-NUM_OF_KEY_BLOCK_32) * 4 + k];
         }
-        PrintRoundKey(i);
+        // PrintRoundKey(i);
     }
 }
 
@@ -404,11 +408,9 @@ void InvAddRoundKey(int r){
     handledByte += 16;
 }
 
-
-
 void Encrypt(){
     handledByte = 0;
-    LogState();
+    // LogState();
     clock_t start,end;
     std::cout << "---------AES Encryption - Start-------------\n";
     //Addround key - round 0
@@ -451,7 +453,7 @@ void Encrypt(){
 void Decrypt(){
     handledByte = 0;
     
-    LogState();
+    // LogState();
     clock_t start,end;
     std::cout << "---------AES Decryption - Start-------------\n";
     start = clock();
@@ -491,16 +493,6 @@ void Decrypt(){
     printf("\n");
 }
 
-/*
-    Suppose
-    6E * 3
-    state_pow [6E,6E*2,6E*4,6E*8]
-    state_pow [6E,DC,A3,5D]
-
-    mulVal: 0x03 : 11
-    res:6E XOR value
-    res: res' XOR DC = 1011 0010
-*/
 
 std::string ReadFile(std::string fileName){
     std::ifstream keyFile(fileName);
